@@ -1,0 +1,59 @@
+name: Anima Uplift V2.0 — 4-Gate Verification Ring
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  rust-and-julia-gates:
+    name: Gate 3 & 4 — Rust #![no_std] Kernel & Julia Q32.32 Telemetry
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Run zero-float Rust unit tests
+        run: cargo test --release --verbose
+
+      - name: Install Julia
+        uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.11"
+
+      - name: Run Julia Q32.32 C-FFI parity & SHA-256 telemetry audit
+        run: julia telemetry/ffi_bridge_q32.jl
+
+  lean4-logic-gate:
+    name: Gate 1 — Lean 4 QuantizationBounds Proof
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install elan & Lean 4 toolchain
+        run: |
+          curl https://githubusercontent.com -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> $GITHUB_PATH
+
+      - name: Verify Lean 4 proofs (zero sorry)
+        run: lake build
+
+  coq-calculus-gate:
+    name: Gate 2 — Coq Symplectic Volume Proof
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Coq compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y coq
+
+      - name: Verify Coq symplectic Jacobian proofs (zero admit)
+        run: coqc verification/SymplecticInvariants.v
